@@ -3,6 +3,17 @@ import json
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
+def get_blog_root(src):
+    with open(src+os.sep+'_config.yml', 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+        for line in lines:
+            if line.startswith('root: '):
+                blog_root = line.split(': ')[1].strip().replace('/','')
+                if blog_root != '':
+                    return blog_root
+                else:
+                    return 'linkeer365.github.io'
+
 def get_all_web_pages(base_dir, blog_root):
     pages = []
 
@@ -175,22 +186,10 @@ def save_to_postgresql(pages, db_config):
         if conn:
             conn.close()
 
-# 使用示例
-if __name__ == '__main__':
-
-    # 根据具体情况修改 src等内容
-
-    src = 'D:\workSpaces\Blogs\Linkeer365TinyMomentSource-master'
+def get_all_web_page_from_src(src,db_config):
     public_dir = src+os.sep+'public'
     post_dir=src+os.sep+'source'+os.sep+'_posts'
-    blog_root = 'Linkeer365Collection'
-    db_config = {
-        'host': 'localhost',
-        'database': 'postgres',
-        'user': 'postgres',
-        'password': 'postgres',
-        'port': '5432'
-    }
+    blog_root = get_blog_root(src)
 
     # baseUrl 末尾不带斜杠
     all_pages = get_all_web_pages(base_dir=public_dir, blog_root=blog_root)
@@ -211,3 +210,20 @@ if __name__ == '__main__':
     # 保存到 PostgreSQL 数据库（新增功能）
     # 请根据实际情况修改数据库配置
     save_to_postgresql(all_pages, db_config)
+
+# 使用示例
+if __name__ == '__main__':
+    # src：所有博客的根目录，里面包含多个博客文件夹
+    src_dir = r"D:\workSpaces\Blogs"
+
+    db_config = {
+        'host': 'localhost',
+        'database': 'postgres',
+        'user': 'postgres',
+        'password': 'postgres',
+        'port': '5432'
+    }
+    for fd in os.listdir(src_dir):
+        if os.path.isdir(os.path.join(src_dir,fd)):
+            src=os.path.join(src_dir,fd)
+            get_all_web_page_from_src(src,db_config)
